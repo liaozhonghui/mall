@@ -23,6 +23,7 @@ func registerAdminRoutes(rg *gin.RouterGroup) {
 }
 func registerAPIRoutes(rg *gin.RouterGroup) {
 	// Define API routes here
+	rg.Use(middleware.AccessLogger) // 时间统计
 	rg.Use(middleware.RecoverMiddleware)
 	rg.Any("/healthCheck", func(c *gin.Context) {
 		t := rand.Intn(10000)
