@@ -2,6 +2,7 @@ package router
 
 import (
 	"mall/api/controller"
+	"mall/api/middleware"
 	"mall/internal/httputils"
 	"math/rand"
 	"net/http"
@@ -27,5 +28,5 @@ func registerAPIRoutes(rg *gin.RouterGroup) {
 		c.JSON(http.StatusOK, httputils.SuccessWithData(t))
 	})
 
-	rg.PUT("/users", controller.SetUserInfo)
+	rg.PUT("/users", middleware.CheckLogin, controller.SetUserInfo)
 }

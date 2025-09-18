@@ -11,7 +11,7 @@ func SuccessWithData(data interface{}) gin.H {
 }
 func Error(err error) gin.H {
 	return gin.H{
-		"code": 50000,
+		"code": 50000, // TODO: 统一错误码
 		"msg":  err.Error(),
 		"data": nil,
 	}
