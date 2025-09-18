@@ -9,3 +9,10 @@ func SuccessWithData(data interface{}) gin.H {
 		"data": data,
 	}
 }
+func Error(err error) gin.H {
+	return gin.H{
+		"code": 50000,
+		"msg":  err.Error(),
+		"data": nil,
+	}
+}

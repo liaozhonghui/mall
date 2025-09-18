@@ -1,6 +1,7 @@
 package router
 
 import (
+	"mall/api/controller"
 	"mall/internal/httputils"
 	"math/rand"
 	"net/http"
@@ -25,4 +26,6 @@ func registerAPIRoutes(rg *gin.RouterGroup) {
 		t := rand.Intn(10000)
 		c.JSON(http.StatusOK, httputils.SuccessWithData(t))
 	})
+
+	rg.PUT("/users", controller.SetUserInfo)
 }
