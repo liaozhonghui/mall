@@ -23,10 +23,13 @@ func registerAdminRoutes(rg *gin.RouterGroup) {
 }
 func registerAPIRoutes(rg *gin.RouterGroup) {
 	// Define API routes here
+	rg.Use(middleware.RecoverMiddleware)
 	rg.Any("/healthCheck", func(c *gin.Context) {
 		t := rand.Intn(10000)
 		c.JSON(http.StatusOK, httputils.SuccessWithData(t))
 	})
 
 	rg.PUT("/users", middleware.CheckLogin, controller.SetUserInfo)
+
+	rg.POST("/panic", controller.TouchPanic) // 用于测试 Recover 中间件
 }
