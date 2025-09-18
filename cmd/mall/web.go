@@ -2,10 +2,12 @@ package mall
 
 import (
 	"fmt"
+	"mall/api/router"
 	"mall/internal/core"
 	"net/http"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 )
 
@@ -28,14 +30,24 @@ func startWebServer(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Printf("Starting web server on %s...\n", core.GlobalConfig.Server.Addr)
-	server := &http.Server{
-		Addr: core.GlobalConfig.Server.Addr,
-	}
+	engine := gin.New()
+	router.RegisterRouter(engine)
+
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(r.URL.Path + " > ping response"))
 	})
 
+	server := initServer(engine)
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Printf("Error starting server: %v\n", err)
 	}
+}
+
+func initServer(handler http.Handler) *http.Server {
+	server := &http.Server{
+		Addr:        core.GlobalConfig.Server.Addr,
+		IdleTimeout: core.GlobalConfig.Server.IdleTimeout,
+		Handler:     handler,
+	}
+	return server
 }

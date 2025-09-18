@@ -1,5 +1,5 @@
 server:
-  addr: 0.0.0.0:9090
+  addr: 0.0.0.0:9080
   readTimeOut: 3s
   writeTimeOut: 3s
   idleTimeOut: 100s
