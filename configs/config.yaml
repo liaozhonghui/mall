@@ -1,0 +1,11 @@
+server:
+  addr: 0.0.0.0:9090
+  readTimeOut: 3s
+  writeTimeOut: 3s
+  idleTimeOut: 100s
+
+mysql:
+  - instance: default
+    dsn: root:123456@tcp(127.0.0.1:3306)/mall?charset=utf8mb4&loc=Local&parseTime=True&timeout=3s
+    trace_log: true # 是否输出所有执行Sql
+    slow_threshold: 100 # 慢查询阈值, 单位为ms
