@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"bytes"
+	"fmt"
 	"io"
-	"mall/internal/log"
+	"mall/internal/logger"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
+	"github.com/spf13/cast"
 )
 
 func AccessLogger(c *gin.Context) {
@@ -20,26 +21,19 @@ func AccessLogger(c *gin.Context) {
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	c.Next()
+	// 结束时间
 	endTime := time.Now()
-	latency := endTime.Sub(startTime)
-
-	method := c.Request.Method
-	path := c.Request.RequestURI
+	//执行时间
+	latencyTime := endTime.Sub(startTime)
+	// 请求方式
+	reqMethod := c.Request.Method
+	// 请求路由
+	reqUri := c.Request.RequestURI
+	// 状态码
 	statusCode := c.Writer.Status()
-	clientIP := c.ClientIP()
 
-	// 使用结构化日志记录访问信息
-	log.Info("HTTP Request",
-		zap.String("method", method),
-		zap.String("path", path),
-		zap.Int("status", statusCode),
-		zap.Duration("latency", latency),
-		zap.String("client_ip", clientIP),
-		zap.String("user_agent", c.Request.UserAgent()),
-	)
+	msg := fmt.Sprintf("method:%v uri:%v req_body:%v status_code:%v latency:%v",
+		reqMethod, reqUri, cast.ToString(body), statusCode, latencyTime)
 
-	// 如果是 debug 级别，记录请求体（注意不要记录敏感信息）
-	if len(body) > 0 && len(body) < 1024 { // 限制body大小
-		log.Debug("Request body", zap.ByteString("body", body))
-	}
+	logger.WithContext(c).Info(msg)
 }

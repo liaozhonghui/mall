@@ -1,6 +1,7 @@
 package router
 
 import (
+	"errors"
 	"mall/api/controller"
 	"mall/api/middleware"
 	"mall/internal/httputils"
@@ -11,9 +12,13 @@ import (
 )
 
 func RegisterRouter(router *gin.Engine) {
+	router.Use(middleware.Context, middleware.AccessLogger)
+
+	// 管理后台接口
 	admin := router.Group("/admin")
 	registerAdminRoutes(admin)
 
+	// 对外API接口
 	api := router.Group("/api")
 	registerAPIRoutes(api)
 }
@@ -23,13 +28,12 @@ func registerAdminRoutes(rg *gin.RouterGroup) {
 }
 func registerAPIRoutes(rg *gin.RouterGroup) {
 	// Define API routes here
-	rg.Use(middleware.AccessLogger) // 时间统计
-	rg.Use(middleware.RecoverMiddleware)
+	rg.Any("/panic", middleware.Recover, func(c *gin.Context) {
+		panic(errors.New("this is a panic test"))
+	}) // 用于测试 Recover 中间件
 	rg.Any("/healthCheck", func(c *gin.Context) {
 		t := rand.Intn(10000)
 		c.JSON(http.StatusOK, httputils.SuccessWithData(t))
 	})
 	rg.PUT("/users", controller.SetUserInfo)
-
-	rg.POST("/panic", controller.TouchPanic) // 用于测试 Recover 中间件
 }

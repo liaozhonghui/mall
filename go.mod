@@ -7,6 +7,7 @@ require github.com/spf13/cobra v1.10.1
 require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/hashicorp/go-uuid v1.0.3
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/viper v1.21.0

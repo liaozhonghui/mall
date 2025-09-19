@@ -1,13 +1,27 @@
-package log
+package logger
 
 import (
+	"context"
 	"fmt"
 	"io"
+	"mall/internal/core"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/spf13/cast"
+	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
+
+var logger *zap.SugaredLogger
+
+func WithContext(ctx context.Context) *zap.SugaredLogger {
+	if ctx == nil {
+		return logger
+	}
+	duration := (time.Now().UnixNano() - cast.ToInt64(ctx.Value("startTime"))) / int64(time.Microsecond)
+	return logger.With("duration", duration).With("traceId", ctx.Value("traceId"))
+}
 
 func GetWriter(filename string) (logf io.Writer, err error) {
 	fmt.Printf("Initializing log file: %s\n", filename)
@@ -51,4 +65,18 @@ func LogLevel(level string) zapcore.Level {
 	default:
 		return zapcore.InfoLevel
 	}
+}
+
+func InitLogger() error {
+	logWriter, err := GetWriter(core.GlobalConfig.Logger.LogFile)
+	if err != nil {
+		fmt.Printf("get log writer error: %v", err)
+		return err
+	}
+
+	c := zapcore.NewCore(GetEncoder(), zapcore.AddSync(logWriter), LogLevel(core.GlobalConfig.Logger.LogLevel))
+	log := zap.New(c, zap.AddCaller())
+	logger = log.Sugar()
+
+	return nil
 }
