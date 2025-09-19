@@ -30,7 +30,8 @@ func registerAPIRoutes(rg *gin.RouterGroup) {
 	// Define API routes here
 	rg.Any("/panic", middleware.Recover, func(c *gin.Context) {
 		panic(errors.New("this is a panic test"))
-	}) // 用于测试 Recover 中间件
+	})
+
 	rg.Any("/healthCheck", func(c *gin.Context) {
 		t := rand.Intn(10000)
 		c.JSON(http.StatusOK, httputils.SuccessWithData(t))

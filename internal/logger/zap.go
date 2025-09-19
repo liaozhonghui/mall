@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"io"
 	"mall/internal/core"
+	"strconv"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+
+	"github.com/petermattis/goid"
 )
 
 var logger *zap.SugaredLogger
@@ -21,6 +24,13 @@ func WithContext(ctx context.Context) *zap.SugaredLogger {
 	}
 	duration := (time.Now().UnixNano() - cast.ToInt64(ctx.Value("startTime"))) / int64(time.Microsecond)
 	return logger.With("duration", duration).With("traceId", ctx.Value("traceId"))
+}
+
+var prefix int64 = 10e9 // 19位
+
+func WithGoID() *zap.SugaredLogger {
+	gid := goid.Get()
+	return logger.With("goid", strconv.FormatInt(prefix+gid, 10))
 }
 
 func GetWriter(filename string) (logf io.Writer, err error) {
