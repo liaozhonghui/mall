@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"mall/api/router"
 	"mall/internal/core"
-	"mall/logs"
+	"mall/internal/log"
 	"net/http"
 	"os"
 
@@ -13,6 +13,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
+
+var Logger *zap.Logger
 
 var webCmd = &cobra.Command{
 	Use: "web",
@@ -32,16 +34,26 @@ func startWebServer(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	if err := InitLogger(); err != nil {
+		fmt.Printf("Error initializing log: %v\n", err)
+		os.Exit(1)
+	}
+
+	Logger.Info("Starting web server", zap.String("address", core.GlobalConfig.Server.Addr))
 	fmt.Printf("Starting web server on %s...\n", core.GlobalConfig.Server.Addr)
+
 	engine := gin.New()
 	router.RegisterRouter(engine)
 
 	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		Logger.Debug("Ping request received", zap.String("path", r.URL.Path))
 		_, _ = w.Write([]byte(r.URL.Path + " > ping response"))
 	})
 
 	server := initServer(engine)
+	Logger.Info("Server starting to listen", zap.String("address", server.Addr))
 	if err := server.ListenAndServe(); err != nil {
+		Logger.Error("Error starting server", zap.Error(err))
 		fmt.Printf("Error starting server: %v\n", err)
 	}
 }
@@ -56,12 +68,18 @@ func initServer(handler http.Handler) *http.Server {
 }
 
 func InitLogger() error {
-	logWriter, _ := logs.GetWriter(core.GlobalConfig.Logger.LogFile)
+	logWriter, err := log.GetWriter(core.GlobalConfig.Logger.LogFile)
+	if err != nil {
+		return err
+	}
 
-	c := zapcore.NewCore(logs.GetEncoder(), zapcore.AddSync(logWriter), logs.LogLevel(core.GlobalConfig.Logger.LogLevel))
+	c := zapcore.NewCore(log.GetEncoder(), zapcore.AddSync(logWriter), log.LogLevel(core.GlobalConfig.Logger.LogLevel))
 
-	log := zap.New(c, zap.AddCaller())
-	_ = log.Sugar()
+	Logger = zap.New(c, zap.AddCaller())
 
+	// 设置全局log，这样其他包也能使用
+	zap.ReplaceGlobals(Logger)
+
+	Logger.Info("Logger initialized successfully")
 	return nil
 }

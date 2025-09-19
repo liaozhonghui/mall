@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"bytes"
-	"fmt"
 	"io"
+	"mall/internal/log"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/cast"
+	"go.uber.org/zap"
 )
 
 func AccessLogger(c *gin.Context) {
@@ -26,8 +26,20 @@ func AccessLogger(c *gin.Context) {
 	method := c.Request.Method
 	path := c.Request.RequestURI
 	statusCode := c.Writer.Status()
+	clientIP := c.ClientIP()
 
-	msg := fmt.Sprintf("| %v | %v | %v | %v |%v", method, path, statusCode, latency, cast.ToString(body))
+	// 使用结构化日志记录访问信息
+	log.Info("HTTP Request",
+		zap.String("method", method),
+		zap.String("path", path),
+		zap.Int("status", statusCode),
+		zap.Duration("latency", latency),
+		zap.String("client_ip", clientIP),
+		zap.String("user_agent", c.Request.UserAgent()),
+	)
 
-	fmt.Println(msg)
+	// 如果是 debug 级别，记录请求体（注意不要记录敏感信息）
+	if len(body) > 0 && len(body) < 1024 { // 限制body大小
+		log.Debug("Request body", zap.ByteString("body", body))
+	}
 }

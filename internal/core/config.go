@@ -12,9 +12,9 @@ type MallConfig struct {
 
 type ServerConfig struct {
 	Addr         string        `mapstructure:"addr"`
-	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
-	WriteTimeout time.Duration `mapstructure:"write_timeout"`
-	IdleTimeout  time.Duration `mapstructure:"idle_timeout"`
+	ReadTimeout  time.Duration `mapstructure:"readTimeOut"`
+	WriteTimeout time.Duration `mapstructure:"writeTimeOut"`
+	IdleTimeout  time.Duration `mapstructure:"idleTimeOut"`
 }
 
 type MysqlConfig struct {
@@ -25,6 +25,6 @@ type MysqlConfig struct {
 }
 
 type LoggerConfig struct {
-	LogFile  string `mapstructure:"log_file"`
-	LogLevel string `mapstructure:"log_level"`
+	LogFile  string `mapstructure:"logFile"`
+	LogLevel string `mapstructure:"logLevel"`
 }
