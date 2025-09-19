@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"log"
-	"mall/internal/httputils"
+	"mall/api/httputils"
 	"net/http"
 	"runtime"
 

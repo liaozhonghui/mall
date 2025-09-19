@@ -3,8 +3,8 @@ package router
 import (
 	"errors"
 	"mall/api/controller"
+	"mall/api/httputils"
 	"mall/api/middleware"
-	"mall/internal/httputils"
 	"math/rand"
 	"net/http"
 

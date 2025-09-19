@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"mall/internal/httputils"
+	"mall/api/httputils"
 	"mall/internal/service"
 	"net/http"
 

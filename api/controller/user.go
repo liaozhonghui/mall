@@ -1,8 +1,9 @@
 package controller
 
 import (
+	"mall/api/httputils"
 	"mall/internal/entity"
-	"mall/internal/httputils"
+
 	logger "mall/internal/logger"
 	"mall/internal/service"
 	"net/http"
