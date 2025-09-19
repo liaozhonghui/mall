@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"mall/api/router"
 	"mall/internal/core"
+	"mall/logs"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var webCmd = &cobra.Command{
@@ -50,4 +53,15 @@ func initServer(handler http.Handler) *http.Server {
 		Handler:     handler,
 	}
 	return server
+}
+
+func InitLogger() error {
+	logWriter, _ := logs.GetWriter(core.GlobalConfig.Logger.LogFile)
+
+	c := zapcore.NewCore(logs.GetEncoder(), zapcore.AddSync(logWriter), logs.LogLevel(core.GlobalConfig.Logger.LogLevel))
+
+	log := zap.New(c, zap.AddCaller())
+	_ = log.Sugar()
+
+	return nil
 }
