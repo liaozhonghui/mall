@@ -26,7 +26,7 @@ func WithContext(ctx context.Context) *zap.SugaredLogger {
 	return logger.With("duration", duration).With("traceId", ctx.Value("traceId"))
 }
 
-var prefix int64 = 10e9 // 19位
+var prefix int64 = 1000000000000000000 // 19位
 
 func WithGoID() *zap.SugaredLogger {
 	gid := goid.Get()

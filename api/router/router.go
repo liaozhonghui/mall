@@ -3,10 +3,7 @@ package router
 import (
 	"errors"
 	"mall/api/controller"
-	"mall/api/httputils"
 	"mall/api/middleware"
-	"math/rand"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,9 +29,7 @@ func registerAPIRoutes(rg *gin.RouterGroup) {
 		panic(errors.New("this is a panic test"))
 	})
 
-	rg.Any("/healthCheck", func(c *gin.Context) {
-		t := rand.Intn(10000)
-		c.JSON(http.StatusOK, httputils.SuccessWithData(t))
-	})
+	rg.Any("/healthCheck", controller.HealthCheck)
+	rg.Any("/healthCheckV1", controller.HealthCheckV1)
 	rg.PUT("/users", controller.SetUserInfo)
 }
