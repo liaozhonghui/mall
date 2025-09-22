@@ -6,7 +6,7 @@ server:
 
 mysql:
   - instance: default
-    dsn: root:123456@tcp(127.0.0.1:3306)/mall?charset=utf8mb4&loc=Local&parseTime=True&timeout=3s
+    dsn: root:123456@tcp(192.168.191.148:3306)/mall?charset=utf8mb4&loc=Local&parseTime=True&timeout=3s
     trace_log: true # 是否输出所有执行Sql
     slow_threshold: 100 # 慢查询阈值, 单位为ms
 
