@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"mall/internal/core"
+	"mall/internal/logger"
 	"sync"
 
 	"gorm.io/driver/mysql"
@@ -16,8 +17,16 @@ func initMysql() {
 
 	tmpInstance := make(map[string]*gorm.DB, 0)
 	for _, conf := range mysqlConfig {
+		config := logger.GormLoggerConfig{
+			SlowThreshold: conf.SlowThreshold,
+			TraceLog:      conf.TraceLog,
+		}
+		newLogger := logger.NewGormLog(config)
+		gormConfig := gorm.Config{}
+		gormConfig.Logger = newLogger
+
 		dsn := conf.Dsn
-		db, err := gorm.Open(mysql.Open((dsn)))
+		db, err := gorm.Open(mysql.Open((dsn)), &gormConfig)
 		if err != nil {
 			fmt.Printf("mysql connect error: %v", err)
 		}
