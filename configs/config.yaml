@@ -13,3 +13,8 @@ mysql:
 logger:
   logFile: logs/mall.log
   logLevel: debug # debug, info, warn, error, dpanic, panic, fatal
+
+jwt:
+  api_secret: "mall_api"
+  expireTime: 86400 # 单位为秒
+  admin_secret: "mall_admin"

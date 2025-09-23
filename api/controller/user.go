@@ -11,6 +11,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func APILogin(c *gin.Context) {
+	req := entity.LoginReq{}
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, httputils.Error(err))
+		return
+	}
+	resp, err := service.APILogin(c, req)
+	if err != nil {
+		c.JSON(http.StatusOK, httputils.Error(err))
+		return
+	}
+
+	c.JSON(http.StatusOK, httputils.SuccessWithData(resp))
+}
+
 func SetUserInfo(c *gin.Context) {
 	var req = entity.SetUserInfoReq{}
 

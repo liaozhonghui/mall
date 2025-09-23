@@ -8,6 +8,7 @@ type MallConfig struct {
 	Server ServerConfig  `mapstructure:"server"`
 	Logger LoggerConfig  `mapstructure:"logger"`
 	Mysql  []MysqlConfig `mapstructure:"mysql"`
+	Jwt    JwtConfig     `mapstructure:"jwt"`
 }
 
 type ServerConfig struct {
@@ -27,4 +28,10 @@ type MysqlConfig struct {
 type LoggerConfig struct {
 	LogFile  string `mapstructure:"logFile"`
 	LogLevel string `mapstructure:"logLevel"`
+}
+
+type JwtConfig struct {
+	ApiSecret   string        `mapstructure:"api_secret"`
+	ExpireTime  time.Duration `mapstructure:"expireTime"`
+	AdminSecret string        `mapstructure:"admin_secret"`
 }
