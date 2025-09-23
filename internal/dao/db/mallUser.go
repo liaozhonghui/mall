@@ -2,7 +2,9 @@ package db
 
 import (
 	"context"
+	"errors"
 	"mall/internal/entity"
+	"mall/internal/logger"
 	"time"
 
 	"gorm.io/gorm"
@@ -39,8 +41,9 @@ func (dao UserDbDao) WithDBInstance(db *gorm.DB) UserDbDao {
 
 func (dao *UserDbDao) CreateUser(ctx context.Context, user entity.User) (int, error) {
 	mallUser := entityToDbUser(user)
-	db := dao.Db.Table(TABLE_MALL_USER).Create(&mallUser)
+	db := dao.Db.Table(TABLE_MALL_USER).WithContext(ctx).Create(&mallUser)
 	if db.Error != nil {
+		logger.WithContext(ctx).Errorf("CreateUser db.Error:%v", db.Error)
 		return 0, db.Error
 	}
 	return mallUser.ID, nil
@@ -48,8 +51,9 @@ func (dao *UserDbDao) CreateUser(ctx context.Context, user entity.User) (int, er
 
 func (dao *UserDbDao) GetUserByAccount(ctx context.Context, account string, password string) (user entity.User, err error) {
 	var mallUser MallUser
-	db := dao.Db.Table(TABLE_MALL_USER).WithContext((ctx)).Where("account = ?", account).Where("password = ?", password).First(&mallUser)
-	if db.Error != nil {
+	db := dao.Db.Table(TABLE_MALL_USER).WithContext(ctx).Where("account = ?", account).Where("password = ?", password).First(&mallUser)
+	if db.Error != nil && !errors.Is(db.Error, gorm.ErrRecordNotFound) {
+		logger.WithContext(ctx).Errorf("GetUserByAccount db.Error:%v", db.Error)
 		return entity.User{}, db.Error
 	}
 	return dbUserToEntity(mallUser), nil
@@ -57,8 +61,9 @@ func (dao *UserDbDao) GetUserByAccount(ctx context.Context, account string, pass
 
 func (dao *UserDbDao) FindUserById(ctx context.Context, id int) (user entity.User, err error) {
 	var mu MallUser
-	db := dao.Db.Table(TABLE_MALL_USER).WithContext((ctx)).Where("id = ?", id).First(&mu)
-	if db.Error != nil {
+	db := dao.Db.Table(TABLE_MALL_USER).WithContext(ctx).Where("id = ?", id).First(&mu)
+	if db.Error != nil && !errors.Is(db.Error, gorm.ErrRecordNotFound) {
+		logger.WithContext(ctx).Errorf("FindUserById db.Error:%v", db.Error)
 		return entity.User{}, db.Error
 	}
 	return dbUserToEntity(mu), nil

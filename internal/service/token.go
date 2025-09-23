@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"mall/internal/core"
 	"time"
 
@@ -27,6 +28,9 @@ func ParseAPIToken(token string) (jwt.MapClaims, error) {
 		return []byte(core.GlobalConfig.Jwt.ApiSecret), nil
 	})
 	if err != nil {
+		if err.Error() == jwt.ErrTokenExpired.Error() {
+			return nil, errors.New("token is expired")
+		}
 		return nil, err
 	}
 	return claim.Claims.(jwt.MapClaims), nil

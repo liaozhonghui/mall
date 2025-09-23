@@ -32,4 +32,5 @@ func registerAPIRoutes(rg *gin.RouterGroup) {
 	rg.Any("/healthCheck", controller.HealthCheck)
 	rg.Any("/healthCheckV1", controller.HealthCheckV1)
 	rg.PUT("/users", controller.SetUserInfo)
+	rg.POST("/login", controller.APILogin)
 }
