@@ -9,6 +9,7 @@ type MallConfig struct {
 	Logger LoggerConfig  `mapstructure:"logger"`
 	Mysql  []MysqlConfig `mapstructure:"mysql"`
 	Jwt    JwtConfig     `mapstructure:"jwt"`
+	Redis  []RedisConfig `mapstructure:"redis"`
 }
 
 type ServerConfig struct {
@@ -34,4 +35,14 @@ type JwtConfig struct {
 	ApiSecret   string        `mapstructure:"api_secret"`
 	ExpireTime  time.Duration `mapstructure:"expireTime"`
 	AdminSecret string        `mapstructure:"admin_secret"`
+}
+
+type RedisConfig struct {
+	Instance     string `mapstructure:"instance"`
+	Addr         string `mapstructure:"addr"`
+	Password     string `mapstructure:"password"`
+	DB           int    `mapstructure:"db"`
+	DialTimeout  int    `mapstructure:"dial_timeout"`
+	ReadTimeout  int    `mapstructure:"read_timeout"`
+	WriteTimeout int    `mapstructure:"write_timeout"`
 }

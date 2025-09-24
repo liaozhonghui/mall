@@ -56,7 +56,7 @@ func (repo *GoodsRepositoryImpl) FindGoodsListByCategoryId(ctx context.Context, 
 }
 
 func (repo *GoodsRepositoryImpl) GetGoodsDetailById(ctx context.Context, goodsId int) (entity.GoodsInfo, error) {
-	goodsInfo, err := repo.goodsDao.GetGoodsDetailById(ctx, goodsId)
+	goodsInfo, err := repo.goodsDao.GetGoodsInfoById(ctx, goodsId)
 	if err != nil {
 		return entity.GoodsInfo{}, err
 	}
@@ -81,9 +81,10 @@ func (repo *GoodsRepositoryImpl) UpdateGoodsSkuStore(ctx context.Context, sku en
 }
 
 func (repo *GoodsRepositoryImpl) CheckSkuLeftStore(ctx context.Context, skuId int) bool {
-	return repo.goodskuDao.CheckSkuLeftStore(ctx, skuId)
+	// return repo.goodskuDao.CheckSkuLeftStore(ctx, skuId)
+	return true
 }
 
 func (repo *GoodsRepositoryImpl) IncrSkuLeftStore(ctx context.Context, skuId int) {
-	repo.goodskuDao.IncrSkuLeftStore(ctx, skuId)
+
 }

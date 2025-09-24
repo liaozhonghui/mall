@@ -18,3 +18,12 @@ jwt:
   api_secret: "mall_api"
   expireTime: 86400 # 单位为秒
   admin_secret: "mall_admin"
+
+redis:
+  - instance: default
+    addr: 192.168.191.148:6379
+    password: 123456
+    db: 0
+    dial_timeout: 100 # 单位为ms
+    read_timeout: 100 # 单位为ms
+    write_timeout: 100 # 单位为ms
