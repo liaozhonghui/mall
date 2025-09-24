@@ -5,6 +5,7 @@ go 1.24.3
 require github.com/spf13/cobra v1.10.1
 
 require (
+	github.com/allegro/bigcache/v3 v3.1.0
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v5 v5.3.0
