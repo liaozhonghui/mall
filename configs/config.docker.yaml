@@ -1,0 +1,29 @@
+server:
+  addr: 0.0.0.0:7001
+  readTimeOut: 3s
+  writeTimeOut: 3s
+  idleTimeOut: 100s
+
+mysql:
+  - instance: default
+    dsn: root:123456@tcp(mysql:3306)/mall?charset=utf8mb4&loc=Local&parseTime=True&timeout=3s
+    trace_log: true # 是否输出所有执行Sql
+    slow_threshold: 100 # 慢查询阈值, 单位为ms
+
+logger:
+  logFile: logs/mall.log
+  logLevel: debug # debug, info, warn, error, dpanic, panic, fatal
+
+jwt:
+  api_secret: "api_secret"
+  expireTime: 86400 # 单位为秒
+  admin_secret: "mall_admin"
+
+redis:
+  - instance: default
+    addr: redis:6379
+    password: 123456
+    db: 0
+    dial_timeout: 100 # 单位为ms
+    read_timeout: 100 # 单位为ms
+    write_timeout: 100 # 单位为ms
