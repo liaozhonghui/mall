@@ -1,27 +1,30 @@
-# 检测操作系统类型
-ifeq ($(OS),Windows_NT)
-    BINARY_EXT := .exe
-    RM := del /Q
-    RM_DIR := rmdir /S /Q
-else
-    BINARY_EXT := 
-    RM := rm -f
-    RM_DIR := rm -rf
+DEFAULT := ./cmd
+OUTPUT := ./bin/main
+
+# 自动检测当前系统
+GOOS := $(strip $(shell go env GOOS))
+
+# Windows 平台输出 .exe 文件
+ifeq ($(GOOS),windows)
+	OUTPUT := ./bin/main.exe
 endif
 
-DEFAULT := ./cmd
-OUTPUT := ./bin/mall$(BINARY_EXT)
-
-default: build
-
-build: 
+# 默认目标
+default:
 	go build -gcflags "-N -l" -o $(OUTPUT) $(DEFAULT)
 
-clean:
-ifeq ($(OS),Windows_NT)
-	if exist .\bin\mall.exe del /Q .\bin\mall.exe
-else
-	$(RM) ./bin/mall$(BINARY_EXT)
-endif
+# 开发模式构建（禁用优化，内联）
+dev:
+	go build -gcflags "-N -l" -o $(OUTPUT) $(DEFAULT)
 
-.PHONY: build clean default
+# 生产模式构建（优化大小, 体积能减少一半）
+prod:
+	go build -a -installsuffix cgo -ldflags="-w -s" -o $(OUTPUT) $(DEFAULT)
+
+# 清理构建产物
+clean:
+ifeq ($(GOOS),windows)
+	-rmdir /s /q bin 2>nul
+else
+	rm -rf ./bin
+endif
