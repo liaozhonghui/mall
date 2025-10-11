@@ -13,7 +13,7 @@ func TestRedisConn(t *testing.T) {
 		t.Errorf("init config failed: %v", err)
 	}
 	t.Log("init config success")
-	redisDao := redis.GetRedisInstance("")
+	redisDao := redis.GetInstance()
 	if redisDao == nil {
 		t.Error("get redis instance failed")
 	}

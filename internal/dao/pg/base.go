@@ -1,4 +1,4 @@
-package db
+package pg
 
 import (
 	"fmt"
@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	"gorm.io/gorm/logger"
-
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-var dbInstance map[string]*gorm.DB
+var db *gorm.DB
+var once sync.Once
 
-func initMysql() {
+func initDb() {
 	// Create a file to store the logs
 	logFile, err := os.OpenFile(core.GlobalConfig.Postgres.Log, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
@@ -31,34 +31,24 @@ func initMysql() {
 		IgnoreRecordNotFoundError: true,                                                        // 忽略ErrRecordNotFound（记录未找到）错误
 		Colorful:                  false,                                                       // 禁用彩色打印
 	})
-	mysqlConfig := core.GlobalConfig.Mysql
 
-	tmpInstance := make(map[string]*gorm.DB, 0)
-	for _, conf := range mysqlConfig {
-		dsn := conf.Dsn
-		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-			Logger: dbLog,
-		})
-		if err != nil {
-			fmt.Printf("mysql connect error: %v", err)
-		}
-		tmpInstance[conf.Instance] = db
+	dbInst, err := gorm.Open(postgres.Open(core.GlobalConfig.Postgres.Dsn), &gorm.Config{
+		Logger: dbLog,
+	})
+
+	if err != nil {
+		fmt.Println("Failed to connect to database:", err)
 	}
-	dbInstance = tmpInstance
+	db = dbInst
 }
 
-var once sync.Once
-
-func GetDbInstance(db string) *gorm.DB {
-	if db == "" {
-		db = "default"
-	}
-
-	if dbInstance != nil {
-		return dbInstance[db]
+func GetInstance() *gorm.DB {
+	if db != nil {
+		return db
 	}
 	once.Do(func() {
-		initMysql()
+		initDb()
 	})
-	return dbInstance[db]
+	return db
+
 }

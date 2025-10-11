@@ -15,7 +15,7 @@ type DistributeLockDao struct {
 
 func NewDistributeLockDao() *DistributeLockDao {
 	return &DistributeLockDao{
-		redisCli: GetRedisInstance(""),
+		redisCli: GetInstance(),
 	}
 }
 

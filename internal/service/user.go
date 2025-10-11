@@ -4,6 +4,7 @@ import (
 	"mall/internal/entity"
 	"mall/internal/logger"
 	"mall/internal/repo"
+	tokenService "mall/internal/service/token"
 	"math/rand"
 	"strconv"
 
@@ -37,7 +38,7 @@ func APILogin(c *gin.Context, req entity.LoginReq) (entity.LoginResp, error) {
 		}
 	}
 
-	token, _ := CreateAPIToken(user.Id, 0)
+	token, _ := tokenService.GenerateToken(user.Id)
 
 	resp.UserId = user.Id
 	resp.Token = token

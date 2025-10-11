@@ -1,12 +1,12 @@
 server:
-  addr: 0.0.0.0:9080
+  addr: 0.0.0.0:7001
   readTimeOut: 3s
   writeTimeOut: 3s
   idleTimeOut: 100s
 
 mysql:
   - instance: default
-    dsn: root:123456@tcp(192.168.191.148:3306)/mall?charset=utf8mb4&loc=Local&parseTime=True&timeout=3s
+    dsn: root:123456@tcp(localhost:3306)/mall?charset=utf8mb4&loc=Local&parseTime=True&timeout=3s
     trace_log: true # 是否输出所有执行Sql
     slow_threshold: 100 # 慢查询阈值, 单位为ms
 
@@ -22,7 +22,7 @@ logger:
   logLevel: debug # debug, info, warn, error, dpanic, panic, fatal
 
 jwt:
-  api_secret: "mall_api"
+  api_secret: "api_secret"
   expireTime: 86400 # 单位为秒
   admin_secret: "mall_admin"
 

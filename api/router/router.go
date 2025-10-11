@@ -9,7 +9,7 @@ import (
 )
 
 func RegisterRouter(router *gin.Engine) {
-	router.Use(middleware.Context, middleware.AccessLogger)
+	router.Use(middleware.Trace, middleware.AccessLogger, middleware.Recover)
 
 	// 管理后台接口
 	admin := router.Group("/admin")
@@ -17,6 +17,7 @@ func RegisterRouter(router *gin.Engine) {
 
 	// 对外API接口
 	api := router.Group("/api")
+	api.Use(middleware.Auth)
 	registerAPIRoutes(api)
 }
 

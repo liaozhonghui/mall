@@ -2,23 +2,31 @@ package core
 
 import "time"
 
-var GlobalConfig MallConfig
+var GlobalConfig Config
 
-type MallConfig struct {
-	Server ServerConfig  `mapstructure:"server"`
-	Logger LoggerConfig  `mapstructure:"logger"`
-	Mysql  []MysqlConfig `mapstructure:"mysql"`
-	Jwt    JwtConfig     `mapstructure:"jwt"`
-	Redis  []RedisConfig `mapstructure:"redis"`
+type Config struct {
+	Server   ServerConfig   `mapstructure:"server"`
+	Mysql    []MysqlConfig  `mapstructure:"mysql"`
+	Postgres PostgresConfig `mapstructure:"postgres"`
+	Jwt      JwtConfig      `mapstructure:"jwt"`
+	Redis    RedisConfig    `mapstructure:"redis"`
+	Logger   LoggerConfig   `mapstructure:"logger"`
 }
 
 type ServerConfig struct {
 	Addr         string        `mapstructure:"addr"`
-	ReadTimeout  time.Duration `mapstructure:"readTimeOut"`
-	WriteTimeout time.Duration `mapstructure:"writeTimeOut"`
-	IdleTimeout  time.Duration `mapstructure:"idleTimeOut"`
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+	IdleTimeout  time.Duration `mapstructure:"idle_timeout"`
 }
 
+type PostgresConfig struct {
+	Dsn           string        `mapstructure:"dsn"`
+	TraceLog      bool          `mapstructure:"trace_log"`
+	SlowThreshold time.Duration `mapstructure:"slow_threshold"`
+	Log           string        `mapstructure:"log"`
+	LogLevel      int           `mapstructure:"log_level"`
+}
 type MysqlConfig struct {
 	Instance      string        `mapstructure:"instance"`
 	Dsn           string        `mapstructure:"dsn"`
@@ -26,23 +34,22 @@ type MysqlConfig struct {
 	SlowThreshold time.Duration `mapstructure:"slow_threshold"`
 }
 
-type LoggerConfig struct {
-	LogFile  string `mapstructure:"logFile"`
-	LogLevel string `mapstructure:"logLevel"`
-}
-
 type JwtConfig struct {
-	ApiSecret   string        `mapstructure:"api_secret"`
-	ExpireTime  time.Duration `mapstructure:"expireTime"`
-	AdminSecret string        `mapstructure:"admin_secret"`
+	ApiSecret  string `mapstructure:"api_secret"`
+	ExpireTime int    `mapstructure:"expire_time"`
+}
+type RedisConfig struct {
+	Addr         string        `mapstructure:"addr"`
+	Password     string        `mapstructure:"password"`
+	Db           int           `mapstructure:"db"`
+	DialTimeout  time.Duration `mapstructure:"dial_timeout"`
+	ReadTimeout  time.Duration `mapstructure:"read_timeout"`
+	WriteTimeout time.Duration `mapstructure:"write_timeout"`
+	PoolSize     int           `mapstructure:"pool_size"`
+	MinIdleConns int           `mapstructure:"min_idle_conns"`
 }
 
-type RedisConfig struct {
-	Instance     string `mapstructure:"instance"`
-	Addr         string `mapstructure:"addr"`
-	Password     string `mapstructure:"password"`
-	DB           int    `mapstructure:"db"`
-	DialTimeout  int    `mapstructure:"dial_timeout"`
-	ReadTimeout  int    `mapstructure:"read_timeout"`
-	WriteTimeout int    `mapstructure:"write_timeout"`
+type LoggerConfig struct {
+	LogFile  string `mapstructure:"log_file"`
+	LogLevel string `mapstructure:"log_level"`
 }

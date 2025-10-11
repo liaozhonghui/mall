@@ -10,6 +10,13 @@ mysql:
     trace_log: true # 是否输出所有执行Sql
     slow_threshold: 100 # 慢查询阈值, 单位为ms
 
+postgres:
+  dsn: "host=postgres user=postgres password=123456 dbname=ai-image port=5432 sslmode=disable"
+  trace_log: true
+  slow_threshold: 200
+  log: logs/gorm.log
+  log_level: 4
+
 logger:
   logFile: logs/mall.log
   logLevel: debug # debug, info, warn, error, dpanic, panic, fatal
@@ -19,11 +26,12 @@ jwt:
   expireTime: 86400 # 单位为秒
   admin_secret: "mall_admin"
 
-redis:
-  - instance: default
-    addr: redis:6379
-    password: 123456
-    db: 0
-    dial_timeout: 100 # 单位为ms
-    read_timeout: 100 # 单位为ms
-    write_timeout: 100 # 单位为ms
+redis: 
+  addr: redis:6379
+  password: 123456
+  db: 0 
+  dial_timeout: 100
+  read_timeout: 100
+  write_timeout: 100
+  pool_size: 10
+  min_idle_conns: 0

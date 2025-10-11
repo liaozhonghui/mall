@@ -5,88 +5,83 @@ import (
 	"fmt"
 	"io"
 	"mall/internal/core"
+	"runtime"
 	"strconv"
 	"time"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/petermattis/goid"
 	"github.com/spf13/cast"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"github.com/petermattis/goid"
 )
 
-var logger *zap.SugaredLogger
+var logging *zap.SugaredLogger
 
-func WithContext(ctx context.Context) *zap.SugaredLogger {
-	if ctx == nil {
-		return logger
-	}
-	duration := (time.Now().UnixNano() - cast.ToInt64(ctx.Value("startTime"))) / int64(time.Microsecond)
-	return logger.With("duration", duration).With("traceId", ctx.Value("traceId"))
-}
-
-var prefix int64 = 1000000000000000000 // 19位
+var prefix int64 = 10000000000000000
 
 func WithGoID() *zap.SugaredLogger {
 	gid := goid.Get()
-	return logger.With("goid", strconv.FormatInt(prefix+gid, 10))
+	return logging.With("goid", strconv.FormatInt(prefix+gid, 10))
 }
 
-func GetWriter(filename string) (logf io.Writer, err error) {
-	fmt.Printf("Initializing log file: %s\n", filename)
-	logf, err = rotatelogs.New(filename+".%Y%m%d%H%M",
-		rotatelogs.WithLinkName(filename),
-		rotatelogs.WithMaxAge(7*24*time.Hour),
-		rotatelogs.WithRotationTime(24*time.Hour),
-	)
-	return
-}
-func GetEncoder() zapcore.Encoder {
-	return zapcore.NewJSONEncoder(zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
-	})
-}
-
-func LogLevel(level string) zapcore.Level {
-	switch level {
-	case "debug", "Debug", "DEBUG":
-		return zapcore.DebugLevel
-	case "info", "Info", "INFO":
-		return zapcore.InfoLevel
-	case "warn", "Warn", "WARN":
-		return zapcore.WarnLevel
-	case "error", "Error", "ERROR":
-		return zapcore.ErrorLevel
-	case "panic", "Panic", "PANIC":
-		return zapcore.PanicLevel
-	case "fatal", "Fatal", "FATAL":
-		return zapcore.FatalLevel
-	default:
-		return zapcore.InfoLevel
+func WithContext(ctx context.Context) *zap.SugaredLogger {
+	if ctx == nil {
+		return logging
 	}
+	duration := (time.Now().UnixNano() - cast.ToInt64(ctx.Value("start_time"))) / int64(time.Millisecond)
+	return logging.With("duration", duration).With("traceId", ctx.Value("trace_id"))
 }
 
 func InitLogger() error {
 	logWriter, err := GetWriter(core.GlobalConfig.Logger.LogFile)
 	if err != nil {
-		fmt.Printf("get log writer error: %v", err)
+		fmt.Printf("get logger writer error:%v\n", err)
 		return err
 	}
-
 	c := zapcore.NewCore(GetEncoder(), zapcore.AddSync(logWriter), LogLevel(core.GlobalConfig.Logger.LogLevel))
 	log := zap.New(c, zap.AddCaller())
-	logger = log.Sugar()
+	logging = log.Sugar()
 
 	return nil
+
+}
+
+func GetWriter(filename string) (logf io.Writer, err error) {
+	options := []rotatelogs.Option{
+		rotatelogs.WithMaxAge(24 * time.Hour),
+		rotatelogs.WithRotationTime(time.Hour),
+	}
+	if runtime.GOOS != "windows" {
+		options = append(options, rotatelogs.WithLinkName(filename))
+	}
+	logf, err = rotatelogs.New(filename+".%Y%m%d%H", options...)
+	return
+}
+
+func GetEncoder() zapcore.Encoder {
+	return zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+		MessageKey:     "content",
+		LevelKey:       "level",
+		TimeKey:        "ts",
+		CallerKey:      "file",
+		EncodeLevel:    zapcore.CapitalLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+		EncodeDuration: zapcore.MillisDurationEncoder,
+	})
+}
+
+func LogLevel(level string) (LogLevel zapcore.Level) {
+	switch level {
+	case "debug", "Debug":
+		LogLevel = zapcore.DebugLevel
+	case "info", "Info":
+		LogLevel = zapcore.InfoLevel
+	case "warn", "Warn":
+		LogLevel = zapcore.WarnLevel
+	case "error", "Error":
+		LogLevel = zapcore.ErrorLevel
+	}
+	return LogLevel
 }
