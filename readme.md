@@ -1,184 +1,307 @@
-# go-mall-backend
+# Go Mall Backend
 
-这是一个基于 Go 的电商后台服务示例（轻量级架构），使用了常见的中间件、配置管理、路由框架与模块化分层设计。
+一个基于 Go 语言开发的现代化商城后端管理系统，采用清洁架构设计模式，提供高性能、可扩展的电商解决方案。
 
-本文档概述项目目录结构、主要设计思想、配置与启动方式，以及常见开发/调试步骤，帮助开发者快速上手并扩展功能。
+## 🚀 项目特性
 
-## 关键特性
+- **清洁架构设计**：遵循DDD（领域驱动设计）和分层架构原则
+- **高性能**：基于 Gin 框架构建的高性能 HTTP 服务
+- **多数据库支持**：支持 MySQL 和 PostgreSQL
+- **缓存机制**：集成 Redis 和 BigCache 双重缓存策略
+- **安全认证**：基于 JWT 的身份认证和授权机制
+- **容器化部署**：支持 Docker 容器化部署
+- **配置管理**：灵活的多环境配置管理
+- **日志系统**：结构化日志记录和轮转
+- **中间件支持**：完善的中间件生态
 
-- 使用 Cobra 提供命令行入口（`mall` 二进制，支持子命令，例如 `web`）。
-- 使用 Gin 作为 HTTP 框架，组织路由与中间件。
-- 使用 Viper 加载 YAML 配置（`internal/core.InitConfig`）。
-- 结构化日志（项目内有 `logger` 模块，基于 zap 实现）。
-- 分层组织（controller/api、service、repo/dao、internal/core、entity 等）。
+## 📁 项目架构
 
-## 项目结构（摘要）
-
-- `cmd/`：程序入口（CLI）。
-	- `main.go`：程序入口，调用 `mall.Execute()`。
-	- `mall/`：cobra 命令集合；包含 `web` 命令用于启动 HTTP 服务。
-- `api/`
-	- `controller/`：HTTP 控制器（处理请求、返回响应），例如 `healthCheck.go`、`user.go`。
-	- `router/`：路由注册（`RegisterRouter`），把中间件和路由绑定到 `*gin.Engine` 上。
-	- `httputils/`：通用的 HTTP 帮助/错误处理工具。
-- `middleware/`：Gin 中间件（例如上下文注入 `context.go`、访问日志 `accessLogger.go`、恢复 `recover.go`、登录校验 `checkLogin.go`）。
-- `internal/`：内部模块
-	- `core/`：核心配置结构定义（`MallConfig` 与 `GlobalConfig`），以及 `InitConfig` 的辅助（`viper` 配置加载）。
-	- `logger/`：日志初始化及配置（基于 zap）。
-	- `dao/`：与数据源相关的封装（`db`、`redis`）。
-	- `repo/`、`service/`：仓储层与业务服务层实现。
-- `entity/`：领域模型（例如 `goods.go`、`user.go`）。
-- `configs/`：默认配置文件（`config.yaml`、`config.docker.yaml`）。
-- `test/`：单元/集成测试示例。
-
-（仓库中还有 `Makefile`、`Dockerfile`、`docker-compose.yaml` 等运维辅助文件。）
-
-## 主要模块说明
-
-1) 启动与命令行
-
-- 程序入口在 `cmd/main.go`：调用 `mall.Execute()`，由 Cobra 管理命令。
-- `cmd/mall/web.go` 提供 `web` 子命令：
-	- 在启动时会执行：
-		- `core.InitConfig(config)`：用 Viper 加载 YAML 配置文件（如果未指定 `-c`，会使用默认 `./configs/config.yaml`）。
-		- `logger.InitLogger()`：初始化全局日志器。
-		- 创建 `gin.Engine`，并调用 `router.RegisterRouter(engine)` 注册中间件与路由。
-		- 启动 `http.Server`（参数来自 `core.GlobalConfig.Server`，例如 Addr、Read/Write/Idle Timeout）。
-
-示例：在项目根目录运行（PowerShell）：
-
-```powershell
-# 直接运行（开发）
-go run ./cmd/main.go mall web -c ./configs/config.yaml
-
-# 或先构建二进制再运行
-go build -o mall ./cmd
-./mall web -c ./configs/config.yaml
+```
+go-mall-backend/
+├── api/                    # API 层
+│   ├── controller/         # 控制器层，处理HTTP请求
+│   ├── httputils/          # HTTP工具类
+│   ├── middleware/         # 中间件
+│   └── router/             # 路由配置
+├── internal/               # 内部业务逻辑（不对外暴露）
+│   ├── core/               # 核心配置
+│   ├── dao/                # 数据访问层
+│   │   ├── cache/          # 缓存层
+│   │   ├── db/             # 数据库操作
+│   │   ├── pg/             # PostgreSQL操作
+│   │   └── redis/          # Redis操作
+│   ├── entity/             # 实体模型
+│   ├── logger/             # 日志组件
+│   ├── repo/               # 仓储层接口和实现
+│   └── service/            # 业务逻辑层
+├── cmd/                    # 命令行工具
+├── configs/                # 配置文件
+├── docs/                   # 文档
+├── test/                   # 测试文件
+├── web/                    # 前端静态资源
+└── bin/                    # 编译输出目录
 ```
 
-2) 配置
+## 🏗️ 架构设计
 
-- 配置读取入口：`internal/core/viper.go` 中的 `InitConfig(configFile string)`。行为：
-	- 若 `configFile==""`，使用内置默认路径 `./configs/config.yaml`。
-	- 使用 `viper.SetConfigFile` + `viper.ReadInConfig()` 读取 YAML 配置。
-	- 使用 `viper.Unmarshal(&GlobalConfig)` 将配置映射到 `core.GlobalConfig`（类型定义在 `internal/core/config.go`）。
+### 分层架构
 
-- `core.GlobalConfig`（部分字段）：
-	- `Server`（`ServerConfig`）：Addr、ReadTimeout、WriteTimeout、IdleTimeout。
-	- `Logger`（`LoggerConfig`）：日志文件路径、日志级别。
-	- `Mysql`（[]MysqlConfig）：多实例 MySQL 配置（DSN、trace 等）。
-	- `Redis`（[]RedisConfig）：Redis 实例配置。
-	- `Jwt`（`JwtConfig`）：API/管理员 token secret 与过期时间。
+本项目采用经典的分层架构模式，从外到内分为：
 
-注意：`mapstructure` tag 已在结构体上声明，确保 viper.Unmarshal 正确绑定字段名。
+1. **API Layer (api/)**
+   - **Controller**: 处理HTTP请求，参数验证，响应格式化
+   - **Middleware**: 认证、日志、错误处理、链路追踪等横切关注点
+   - **Router**: 路由配置和注册
 
-3) 路由与中间件
+2. **Service Layer (internal/service/)**
+   - 业务逻辑实现
+   - 业务规则验证
+   - 事务管理
 
-- 路由注册在 `api/router/router.go`：
-	- 全局中间件：`middleware.Context`、`middleware.AccessLogger`。
-	- 管理后台路由组 `/admin`（`registerAdminRoutes`）。
-	- 对外 API 路由组 `/api`（`registerAPIRoutes`），当前示例中注册了：
-		- `/api/panic`：用于测试 panic 与 recover 中间件。
-		- `/api/healthCheck`、`/api/healthCheckV1`：健康检查接口。
-		- `/api/users`（PUT）：设置用户信息。
-		- `/api/login`（POST）：登录接口。
+3. **Repository Layer (internal/repo/)**
+   - 数据访问抽象
+   - 接口定义与实现分离
+   - 支持多种数据源
 
-- 主要中间件：
-	- `Context`：在请求生命周期中注入请求上下文或跟踪信息。
-	- `AccessLogger`：请求访问日志记录（通常结合 zap）。
-	- `Recover`：捕获 panic 并返回 5xx 错误。
-	- `CheckLogin`：认证校验（用于需要登录保护的路由）。
+4. **Data Access Layer (internal/dao/)**
+   - 具体的数据访问实现
+   - 缓存策略
+   - 数据库操作
 
-4) 服务层、仓储层与 DAO
+### 核心组件
 
-- `service/`：封装业务逻辑，controller 层只负责解析请求与处理响应。
-- `repo/`：仓储接口定义与实现，隐藏具体数据源细节。
-- `internal/dao`（`db`、`redis`）：对底层 DB/Redis 连接与简单 CRUD 的封装。
+#### 配置管理 (internal/core/)
+- 使用 Viper 进行配置管理
+- 支持多环境配置（开发/测试/生产）
+- 热配置重载
 
-这种分层有助于：测试、替换实现（例如把 MySQL 换成别的存储）、单元测试 mock。
+#### 数据访问 (internal/dao/)
+- **Database**: GORM ORM 框架，支持 MySQL/PostgreSQL
+- **Cache**: Redis + BigCache 双重缓存
+- **Connection Pool**: 数据库连接池管理
 
-## 常见操作
+#### 身份认证 (internal/service/auth.go)
+- JWT Token 生成和验证
+- 用户登录状态管理
+- 权限控制
 
-- 运行测试：
+#### 日志系统 (internal/logger/)
+- 基于 Zap 的高性能日志
+- 日志轮转和归档
+- 结构化日志输出
 
-```powershell
-go test ./... -v
+## 🛠️ 技术栈
+
+### 核心框架
+- **[Gin](https://gin-gonic.com/)**: 高性能 HTTP Web 框架
+- **[GORM](https://gorm.io/)**: Go 语言 ORM 库
+- **[Viper](https://github.com/spf13/viper)**: 配置管理
+- **[Cobra](https://cobra.dev/)**: CLI 命令行工具
+
+### 数据存储
+- **MySQL**: 主数据库
+- **PostgreSQL**: 可选数据库
+- **Redis**: 缓存和会话存储
+- **BigCache**: 内存缓存
+
+### 工具库
+- **[Zap](https://github.com/uber-go/zap)**: 高性能日志库
+- **[JWT](https://github.com/golang-jwt/jwt)**: JSON Web Token
+- **[UUID](https://github.com/hashicorp/go-uuid)**: UUID 生成
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Go 1.24.3+
+- MySQL 8.0+ 或 PostgreSQL 12+
+- Redis 6.0+
+- Docker & Docker Compose (可选)
+
+### 本地开发
+
+1. **克隆项目**
+```bash
+git clone https://github.com/liaozhonghui/go-mall-backend.git
+cd go-mall-backend
 ```
 
-- 代码格式化与静态检查：
-
-```powershell
-gofmt -w .
-go vet ./...
-# 可选: golangci-lint run
+2. **安装依赖**
+```bash
+go mod download
 ```
 
-- 构建与运行（开发机器）：
-
-```powershell
-go build -o mall ./cmd
-./mall web -c ./configs/config.yaml
+3. **配置数据库**
+```bash
+# 执行数据库初始化脚本
+mysql -u root -p < docs/basic.sql
 ```
 
-## 如何添加新路由
-
-1. 在 `api/controller/` 新建控制器处理函数（签名满足 gin.HandlerFunc）。
-2. 在 `api/router/router.go` 的 `registerAPIRoutes` 或 `registerAdminRoutes` 中注册路由。
-3. 如需鉴权，在路由注册时添加 `middleware.CheckLogin` 或在控制器中手动校验。
-
-示例（伪代码）：
-
-```go
-// api/controller/foo.go
-func FooHandler(c *gin.Context) {
-		// 解析请求 -> 调用 service -> 返回 JSON
-}
-
-// api/router/router.go
-rg.GET("/foo", middleware.CheckLogin, controller.FooHandler)
+4. **修改配置文件**
+```bash
+cp configs/config.yaml configs/config.local.yaml
+# 编辑 configs/config.local.yaml 配置数据库连接信息
 ```
 
-## 配置示例（要点）
+5. **编译和运行**
+```bash
+# 开发模式编译
+make dev
 
-- `configs/config.yaml`（示例说明）：
-	- `server.addr`：监听地址（例：":8080"或"0.0.0.0:8080"）。
-	- `server.readTimeOut` / `server.writeTimeOut` / `server.idleTimeOut`：超时配置（解析为 time.Duration）。
-	- `mysql`：数组，可配置多个实例（每个包含 `instance`、`dsn` 等）。
-	- `redis`：数组，配置连接参数与超时。
-
-注意：viper 在解析 duration 字段时，YAML 中可以使用字符串（例如 "30s"）。如果使用整数字段，需按项目中类型要求设置。
-
-## 开发者规范与风格
-
-- 代码组织：按功能分层（controller -> service -> repo/dao -> entity）。
-- 错误处理：controller 层应把业务错误转换为 HTTP 响应码与统一的错误结构（参考 `api/httputils`）。
-- 日志：使用结构化日志（zap），日志级别与文件路径由配置控制。
-- 配置：优先使用配置文件，必要时支持环境变量覆盖（可扩展 Viper 的读取策略）。
-
-## 调试与排错建议
-
-- 如果启动失败，先检查配置文件路径是否正确：`mall web -c ./configs/config.yaml`。
-- 查看日志文件（`core.GlobalConfig.Logger.LogFile`）或控制台输出。
-- 使用 `curl` 或浏览器访问健康检查：
-
-```powershell
-curl http://localhost:8080/ping
-curl http://localhost:8080/api/healthCheck
+# 运行 Web 服务
+./bin/main web -c configs/config.local.yaml
 ```
 
-## 扩展建议（短期优先）
+### Docker 部署
 
-- 在 `router` 中把路由注册拆成多个文件（按资源拆分），提高可维护性。
-- 提供示例 `configs/config.local.yaml` 与 `configs/config.docker.yaml`，并在 README 中给出 docker-compose 启动示例。
-- 增加更多单元测试覆盖 `service` 与 `repo` 层，使用接口 mock 依赖。
+1. **使用 Docker Compose**
+```bash
+# 构建并启动所有服务
+docker-compose up -d
 
-## 总结
+# 查看服务状态
+docker-compose ps
 
-该项目采用了典型的 Go 后端分层结构，使用 Cobra + Gin + Viper + Zap 的组合，易于扩展与维护。文档、路由与配置清晰，可作为一个电商后台服务的骨架。
+# 查看日志
+docker-compose logs -f mall-backend
+```
 
-如果你希望我把 README 再细化为：
-- 完整的配置文件示例（逐字段注释）
-- Docker / docker-compose 的启动示例
-- 新增一个示例 API 的端到端实现（controller -> service -> repo -> dao）
+2. **单独构建 Docker 镜像**
+```bash
+# 构建镜像
+docker build -t go-mall-backend .
 
-我可以继续为你生成这些内容或将它们加入到仓库中。
+# 运行容器
+docker run -d \
+  --name mall-backend \
+  -p 9080:9080 \
+  -v $(pwd)/configs:/app/configs \
+  go-mall-backend
+```
+
+## 📖 API 文档
+
+### 公共 API (需要认证)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| ANY | `/api/healthCheck` | 健康检查 |
+| ANY | `/api/healthCheckV1` | 健康检查 V1 |
+| PUT | `/api/users` | 更新用户信息 |
+| POST | `/api/login` | 用户登录 |
+
+### 管理后台 API
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/admin/*` | 管理后台路由 (待完善) |
+
+### 认证说明
+
+- 除登录接口外，所有 `/api/*` 路径都需要 JWT Token 认证
+- Token 通过 `Authorization: Bearer <token>` 头部传递
+- Token 默认有效期为 24 小时
+
+## 🔧 配置说明
+
+### 主要配置项
+
+```yaml
+server:
+  addr: 0.0.0.0:9080          # 服务监听地址
+  readTimeOut: 3s             # 读超时
+  writeTimeOut: 3s            # 写超时
+  idleTimeOut: 100s           # 空闲超时
+
+mysql:
+  - instance: default
+    dsn: "root:password@tcp(localhost:3306)/mall?charset=utf8mb4&loc=Local&parseTime=True"
+    trace_log: true           # SQL 执行日志
+    slow_threshold: 100       # 慢查询阈值(ms)
+
+redis:
+  addr: localhost:6379        # Redis 地址
+  password: ""                # Redis 密码
+  db: 0                       # Redis 数据库
+
+jwt:
+  api_secret: "mall_api"      # API JWT 密钥
+  admin_secret: "mall_admin"  # 管理后台 JWT 密钥
+  expireTime: 86400           # Token 过期时间(秒)
+
+logger:
+  logFile: logs/mall.log      # 日志文件路径
+  logLevel: debug             # 日志级别
+```
+
+## 🧪 测试
+
+### 运行测试
+```bash
+# 运行所有测试
+go test ./...
+
+# 运行特定包的测试
+go test ./test/
+
+# 运行测试并显示覆盖率
+go test -cover ./...
+
+# 生成覆盖率报告
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
+
+### 测试结构
+- `test/`: 集成测试和端到端测试
+- `*_test.go`: 单元测试文件
+
+## 📝 开发规范
+
+### 代码风格
+- 遵循 Go 官方代码规范
+- 使用 `gofmt` 和 `golint` 进行代码格式化
+- 变量和函数使用驼峰命名法
+- 包名使用小写字母
+
+### 目录结构规范
+- `api/`: 对外暴露的 API 接口
+- `internal/`: 内部业务逻辑，不对外暴露
+- `cmd/`: 命令行工具和程序入口
+- `configs/`: 配置文件
+- `docs/`: 项目文档
+- `test/`: 测试文件
+
+### Git 提交规范
+```
+feat: 新功能
+fix: 修复bug
+docs: 文档更新
+style: 代码格式调整
+refactor: 代码重构
+test: 测试相关
+chore: 构建过程或辅助工具的变动
+```
+
+## 🤝 贡献指南
+
+1. Fork 本仓库
+2. 创建特性分支: `git checkout -b feature/new-feature`
+3. 提交更改: `git commit -am 'Add new feature'`
+4. 推送分支: `git push origin feature/new-feature`
+5. 提交 Pull Request
+
+## 📄 许可证
+
+本项目采用 MIT 许可证。详情请参见 [LICENSE](LICENSE) 文件。
+
+## 📞 联系方式
+
+如有问题或建议，请通过以下方式联系：
+
+- 项目地址: [https://github.com/liaozhonghui/go-mall-backend](https://github.com/liaozhonghui/go-mall-backend)
+- Issues: [提交问题](https://github.com/liaozhonghui/go-mall-backend/issues)
+
+---
+
+⭐ 如果这个项目对你有帮助，请给个 Star 支持一下！
