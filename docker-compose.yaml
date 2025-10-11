@@ -1,0 +1,132 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: main-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: db
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ~/dockerVolumes/postgres-data:/var/lib/postgresql/data
+      - ~/dockerVolumes/postgres-logs:/var/log/postgresql
+    restart: unless-stopped
+    networks:
+      - main-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: main-redis
+    command: redis-server --requirepass 123456 --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - ~/dockerVolumes/redis-data:/data
+      - ~/dockerVolumes/redis-logs:/var/log/redis
+    restart: unless-stopped
+    networks:
+      - main-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  app:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: main-app
+    ports:
+      - "7001:7001"
+    volumes:
+      - ../configs/config.docker.yaml:/configs/config.yaml:ro
+      - ~/dockerVolumes/app-logs:/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - main-network
+
+  healthcheck:
+    image: curlimages/curl:latest
+    container_name: main-healthcheck
+    depends_on:
+      - app
+    networks:
+      - main-network
+    command: >
+      sh -c '
+      while true; do
+        if curl -f http://app:7001/healthCheck > /dev/null 2>&1; then
+          echo "Health check passed at $(date)"
+        else
+          echo "Health check failed at $(date)"
+        fi
+        sleep 2
+      done
+      '
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: main-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "8080:80"
+    volumes:
+      - ~/dockerVolumes/pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - main-network
+
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: main-redis-insight
+    ports:
+      - "8001:5540"
+    volumes:
+      - ~/dockerVolumes/redis-insight-data:/db
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - main-network
+
+networks:
+  main-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  postgres-logs:
+    driver: local
+  redis-logs:
+    driver: local
+  app-logs:
+    driver: local
+  pgadmin-data:
+    driver: local
+  redis-insight-data:
+    driver: local
