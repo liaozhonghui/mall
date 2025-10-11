@@ -1,7 +1,7 @@
 package httputils
 
 var (
-	OK            = response{Code: 0, Message: "ok"}
+	OK            = response{Code: 0, Message: "OK"}
 	InterNalError = response{Code: 500, Message: "服务异常"}
 
 	AuthError          = response{Code: 401, Message: "认证失败"}
